@@ -12,6 +12,15 @@ router.get(`/`, async (req, res) => {
     res.send(productList);
 });
 
+router.get(`/:id`, async (req, res) => {
+    const product = await Product.findById(req.params.id);
+
+    if(!product)
+        return res.status(500).json({success: false, message: 'Product not found'});
+
+    res.status(200).send(product);
+});
+
 router.post(`/`, async (req, res) => {
     const category = await Category.findById(req.body.category);
     if (!category) return res.status(400).send('Invalid Category');
