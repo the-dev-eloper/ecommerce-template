@@ -36,7 +36,24 @@ router.post(`/`, async (req, res) => {
     res.send(newCategory);
 });
 
-router.delete(`/:id`, async (req, res) => {
+router.put(`/:id`, (req, res) => {
+    Category.findByIdAndUpdate(req.params.id, {
+        name: req.body.name,
+        icon: req.body.icon,
+        color: req.body.color
+    })
+        .then(category => {
+            if(category) {
+                return res.status(200).json({success: true, message: 'Category updated successfully!'});
+            } else {
+                return res.status(404).json({success: false , message: "Category not found!"});
+            }
+        }).catch(err=>{
+            return res.status(500).json({success: false, error: err});
+        })
+});
+
+router.delete(`/:id`, (req, res) => {
     Category.findByIdAndRemove(req.params.id)
         .then(category => {
             if(category) {
