@@ -2,7 +2,7 @@ const express = require('express');
 const { Product } = require('../models/ProductModel');
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get(`/`, async (req, res) => {
     const productList = await Product.find();
 
     if(!productList) {
@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     res.send(productList);
 });
 
-router.post('/', async (req, res) => {
+router.post(`/`, async (req, res) => {
     let newProduct = new Product({
         name: req.body.name,
         description: req.body.description,
