@@ -4,7 +4,7 @@ const { Product } = require('../models/ProductModel');
 const router = express.Router();
 
 router.get(`/`, async (req, res) => {
-    const productList = await Product.find();
+    const productList = await Product.find().populate('category');
 
     if(!productList) {
         res.status(500).json({ success: false });
@@ -13,7 +13,7 @@ router.get(`/`, async (req, res) => {
 });
 
 router.get(`/:id`, async (req, res) => {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('category');
 
     if(!product)
         return res.status(500).json({success: false, message: 'Product not found'});
