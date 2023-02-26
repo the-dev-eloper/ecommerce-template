@@ -1,4 +1,5 @@
 const express = require('express');
+const { mongoose } = require('mongoose');
 const { Category } = require('../models/CategoryModel');
 const { Product } = require('../models/ProductModel');
 const router = express.Router();
@@ -46,6 +47,10 @@ router.post(`/`, async (req, res) => {
 });
 
 router.put(`/:id`, async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).send('Invalid Product Id');
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, {
         name: req.body.name,
         description: req.body.description,
@@ -65,6 +70,19 @@ router.put(`/:id`, async (req, res) => {
     } else {
         res.status(500).json({ success: false, message: 'Updation Failed'});
     }
+});
+
+router.delete(`/:id`, (req, res) => {
+    Product.findByIdAndRemove(req.params.id)
+        .then(product => {
+            if(product) {
+                return res.status(200).json({success: true, message: 'Deleted Successfully!'});
+            } else {
+                return res.status(404).json({success: false , message: "Product not found!"});
+            }
+        }).catch(err=>{
+           return res.status(500).json({success: false, error: err});
+        })
 });
 
 module.exports = router;
