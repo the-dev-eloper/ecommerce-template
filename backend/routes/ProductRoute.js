@@ -3,16 +3,42 @@ const { mongoose } = require('mongoose');
 const { Category } = require('../models/CategoryModel');
 const { Product } = require('../models/ProductModel');
 const router = express.Router();
+const multer = require('multer');
+
+const FILE_TYPE_MAP = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg',
+};
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const isValid = FILE_TYPE_MAP[file.mimetype];
+        let uploadError = new Error('invalid image type');
+
+        if (isValid) {
+            uploadError = null;
+        }
+        cb(uploadError, 'public/uploads');
+    },
+    filename: function (req, file, cb) {
+        const fileName = file.originalname.split(' ').join('-');
+        const extension = FILE_TYPE_MAP[file.mimetype];
+        cb(null, `${fileName}-${Date.now()}.${extension}`);
+    },
+});
+
+const upload = multer({ storage: storage });
 
 router.get(`/`, async (req, res) => {
     let filter = {};
-    if(req.query.categories) {
-        filter = { category: req.query.categories.split(',')}
+    if (req.query.categories) {
+        filter = { category: req.query.categories.split(',') }
     }
 
     const productList = await Product.find(filter).populate('category');
 
-    if(!productList) {
+    if (!productList) {
         res.status(500).json({ success: false });
     }
     res.send(productList);
@@ -21,21 +47,27 @@ router.get(`/`, async (req, res) => {
 router.get(`/:id`, async (req, res) => {
     const product = await Product.findById(req.params.id).populate('category');
 
-    if(!product)
-        return res.status(500).json({success: false, message: 'Product not found'});
+    if (!product)
+        return res.status(500).json({ success: false, message: 'Product not found' });
 
     res.status(200).send(product);
 });
 
-router.post(`/`, async (req, res) => {
+router.post(`/`, upload.single('image'), async (req, res) => {
     const category = await Category.findById(req.body.category);
     if (!category) return res.status(400).send('Invalid Category');
+
+    const file = req.file;
+    if (!file) return res.status(400).send('No image in the request');
+
+    const fileName = file.filename;
+    const baseName = `${req.protocol}://${req.get('host')}/public/uploads/`;
 
     let newProduct = new Product({
         name: req.body.name,
         description: req.body.description,
         richDescription: req.body.richDescription,
-        image: req.body.image,
+        image: `${baseName}${fileName}`,
         brand: req.body.brand,
         price: req.body.price,
         category: req.body.category,
@@ -46,7 +78,7 @@ router.post(`/`, async (req, res) => {
     });
 
     newProduct = await newProduct.save();
-    if(!newProduct) return res.status(500).send('The product cannot be created');
+    if (!newProduct) return res.status(500).send('The product cannot be created');
 
     res.send(newProduct);
 });
@@ -70,23 +102,23 @@ router.put(`/:id`, async (req, res) => {
         isFeatured: req.body.isFeatured,
     });
 
-    if(updatedProduct) {
-        res.status(200).json({ success: true, message: 'Product Updated Successfully'});
+    if (updatedProduct) {
+        res.status(200).json({ success: true, message: 'Product Updated Successfully' });
     } else {
-        res.status(500).json({ success: false, message: 'Updation Failed'});
+        res.status(500).json({ success: false, message: 'Updation Failed' });
     }
 });
 
 router.delete(`/:id`, (req, res) => {
     Product.findByIdAndRemove(req.params.id)
         .then(product => {
-            if(product) {
-                return res.status(200).json({success: true, message: 'Deleted Successfully!'});
+            if (product) {
+                return res.status(200).json({ success: true, message: 'Deleted Successfully!' });
             } else {
-                return res.status(404).json({success: false , message: "Product not found!"});
+                return res.status(404).json({ success: false, message: "Product not found!" });
             }
-        }).catch(err=>{
-           return res.status(500).json({success: false, error: err});
+        }).catch(err => {
+            return res.status(500).json({ success: false, error: err });
         })
 });
 
