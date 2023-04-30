@@ -68,6 +68,7 @@ const swSrc = paths.swSrc;
 
 // style files regexes
 const cssRegex = /\.css$/;
+const lessRegex = /\.less$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
@@ -485,6 +486,21 @@ module.exports = function (webpackEnv) {
               // Remove this when webpack adds a warning or an error for this.
               // See https://github.com/webpack/webpack/issues/6571
               sideEffects: true,
+            },
+            {
+              test: lessRegex,
+              use: [
+                { loader: "style-loader" },
+                { loader: "css-loader" },
+                {
+                  loader: "less-loader",
+                  options: {
+                    lessOptions: {
+                      javascriptEnabled: true,
+                    }
+                  }
+                },
+              ],
             },
             // Adds support for CSS Modules (https://github.com/css-modules/css-modules)
             // using the extension .module.css
